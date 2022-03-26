@@ -1,0 +1,34 @@
+version: '3' # composeファイルのバージョン
+services:
+  go: # サービス名
+   build: # ビルドに使うDockerfileの場所
+     context: .             # コンテキストをルートディレクトリに指定
+     dockerfile: Dockerfile  # dockerfileの場所を直接指定
+   stdin_open: true
+   tty: true # コンテナの永続化
+   volumes:
+    - .:/go # ホストからコンテナにマウント
+   ports:
+    - 8080:8080
+   depends_on:
+    - "db"
+
+  db:
+    platform: linux/x86_64
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: go_database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      TZ: 'Asia/Tokyo'
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./db/my.cnf:/etc/mysql/conf.d/my.cnf
+    ports:
+      - 3306:3306
+
+volumes:
+  db-data:
+    driver: local
