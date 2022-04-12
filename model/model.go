@@ -17,8 +17,8 @@ type Todo struct {
 // DB接続
 func sqlConnect() (database *gorm.DB) {
 	DBMS := "mysql"
-	USER := "user"
-	PASS := "password"
+	USER := "root"
+	PASS := "root"
 	PROTOCOL := "tcp(db:3306)"
 	DBNAME := "go_database"
 
