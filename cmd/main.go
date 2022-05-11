@@ -14,6 +14,29 @@ func main() {
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*.html")
 
+	// ユーザー登録画面
+	router.GET("/signup", func(c *gin.Context) {
+		c.HTML(200, "signup.html", gin.H{})
+	})
+
+	// ユーザー登録
+	router.POST("/signup", func(c *gin.Context) {
+		var users model.User
+		// バリデーション
+		if err := c.ShouldBind(&users); err != nil {
+			c.HTML(400, "signup.html", gin.H{"err": err})
+			c.Abort() // これ以下の処理をストップ
+		} else {
+			username := c.PostForm("username")
+			password := c.PostForm("password")
+			// 重複するユーザーを弾く
+			if err := model.CheckUser(username, password); err != nil {
+				c.HTML(400, "signup.html", gin.H{"err": err})
+			}
+			c.Redirect(302, "/")
+		}
+	})
+
 	model.Init()
 
 	// Index
@@ -28,7 +51,7 @@ func main() {
 	router.POST("/new", func(ctx *gin.Context) {
 		text := ctx.PostForm("text")
 		status := ctx.PostForm("status")
-		model.Insert(text, status)
+		model.TodoInsert(text, status)
 		ctx.Redirect(302, "/")
 	})
 

@@ -1,8 +1,8 @@
 package model
 
 import (
+	"cook_gin/crypto"
 	"fmt"
-	"time"
 
 	"github.com/jinzhu/gorm"
 )
@@ -14,6 +14,11 @@ type Todo struct {
 	Status string
 }
 
+type User struct {
+	UserName string `binding:"required" gorm:"primary_key;not null"`
+	PassWord string `binding:"required"`
+}
+
 // DB接続
 func sqlConnect() (database *gorm.DB) {
 	DBMS := "mysql"
@@ -23,26 +28,13 @@ func sqlConnect() (database *gorm.DB) {
 	DBNAME := "go_database"
 
 	CONNECT := USER + ":" + PASS + "@" + PROTOCOL + "/" + DBNAME + "?charset=utf8&parseTime=true&loc=Asia%2FTokyo"
-
-	count := 0
 	db, err := gorm.Open(DBMS, CONNECT)
+
 	if err != nil {
-		for {
-			if err == nil {
-				fmt.Println("")
-				break
-			}
-			fmt.Print(".")
-			time.Sleep(time.Second)
-			count++
-			if count > 180 {
-				fmt.Println("")
-				fmt.Println("DB接続失敗")
-				panic(err)
-			}
-			db, err = gorm.Open(DBMS, CONNECT)
-		}
+		fmt.Println("DB接続失敗")
+		panic(err)
 	}
+
 	fmt.Println("DB接続成功")
 
 	return db
@@ -56,9 +48,15 @@ func Init() {
 }
 
 // DB追加
-func Insert(text, status string) {
+func TodoInsert(text, status string) {
 	db := sqlConnect()
 	db.Create(&Todo{Text: text, Status: status}) // 引数追加
+	defer db.Close()
+}
+
+func UserInsert(username, passwordHash string) {
+	db := sqlConnect()
+	db.Create(&User{UserName: username, PassWord: passwordHash})
 	defer db.Close()
 }
 
@@ -98,4 +96,10 @@ func Delete(id int) {
 	db.First(&todo, id)
 	db.Delete(&todo)
 	db.Close()
+}
+
+func CheckUser(username, password string) []error {
+	passwordHash, _ := crypto.PasswordHash(password)
+	UserInsert(username, passwordHash)
+	return nil
 }
